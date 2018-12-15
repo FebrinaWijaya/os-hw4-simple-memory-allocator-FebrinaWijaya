@@ -1,0 +1,4 @@
+alloc 32768
+alloc 35000
+alloc 33000
+print mmap_alloc_list
