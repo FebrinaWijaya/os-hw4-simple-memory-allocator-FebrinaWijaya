@@ -1,5 +1,6 @@
 #include "lib/hw_malloc.h"
 #include "hw4_mm_test.h"
+#define DEBUG 0
 
 int main(int argc, char *argv[])
 {
@@ -61,7 +62,7 @@ void print_bin(int i)
     while(head!=bin[i]) {
         //print chunk address
         printf("%p--------%d\n", (void *)((void *)head - start_sbrk), (head->size_and_flag).mmap_flag_n_cur_chunk_size);
-        printf("alloc_flag_n_prev_chunk_size : %d\n",(head->size_and_flag).alloc_flag_n_prev_chunk_size);
+        if(DEBUG) printf("alloc_flag_n_prev_chunk_size : %d\n",(head->size_and_flag).alloc_flag_n_prev_chunk_size);
         head = head->next;
     }
 }

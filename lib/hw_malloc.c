@@ -1,5 +1,5 @@
 #include "hw_malloc.h"
-#define DEBUG 1
+#define DEBUG 0
 size_t mmap_treshold = 32768;
 
 void *hw_malloc(size_t bytes)
@@ -52,7 +52,7 @@ int hw_free(void *mem)
     if((long int)mem < 64*1024) chunk_header = (void *)chunk_header + (long int)start_sbrk;
     if(chunk_header == NULL) return -1;
     if((chunk_header->size_and_flag).mmap_flag_n_cur_chunk_size/MMAP >= 0) { //allocated by MMAP
-        printf("free mmap\n");
+        if(DEBUG) printf("free mmap\n");
         chunk_header_t *head = mmap_head->next;
         while(head!=chunk_header && head!=mmap_head)
             head = head->next;
@@ -62,7 +62,7 @@ int hw_free(void *mem)
         int size = (chunk_header->size_and_flag).mmap_flag_n_cur_chunk_size/MMAP;
         return munmap(chunk_header, size); //0=success; -1=failed
     } else { //allocated by heap
-        printf("free heap\n");
+        if(DEBUG) printf("free heap\n");
         if((chunk_header->size_and_flag).alloc_flag_n_prev_chunk_size / ALLOCATED < 0) //mem is free
             return 0;
         (chunk_header->size_and_flag).alloc_flag_n_prev_chunk_size /= ALLOCATED; //+size
@@ -78,7 +78,7 @@ int hw_free(void *mem)
             if((void *)next_chunk < start_sbrk + 64*1024
                     && (next_chunk->size_and_flag).alloc_flag_n_prev_chunk_size / ALLOCATED < 0 //free
                     && (next_chunk->size_and_flag).mmap_flag_n_cur_chunk_size == cur_size) {
-                printf("merged\n");
+                if(DEBUG) printf("merged\n");
                 chunk_header = merge(chunk_header, next_chunk, cur_size);
                 merged = true;
                 cur_size = (chunk_header->size_and_flag).mmap_flag_n_cur_chunk_size;
