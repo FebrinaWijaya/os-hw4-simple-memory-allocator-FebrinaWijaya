@@ -74,6 +74,16 @@ int hw_free(void *mem)
         while(merged) {
             if(cur_size == 32*1024) break;
             merged = false;
+            chunk_header_t *prev_chunk = (chunk_header_t *)((void *)chunk_header-prev_size);
+            if((void *)prev_chunk >= start_sbrk
+                    && (prev_chunk->size_and_flag).alloc_flag_n_prev_chunk_size / ALLOCATED < 0 //free
+                    && (prev_chunk->size_and_flag).mmap_flag_n_cur_chunk_size == cur_size) {
+                chunk_header = merge(chunk_header, prev_chunk, cur_size);
+                merged = true;
+                cur_size = (chunk_header->size_and_flag).mmap_flag_n_cur_chunk_size;
+                prev_size = (chunk_header->size_and_flag).alloc_flag_n_prev_chunk_size;
+                continue;
+            }
             chunk_header_t *next_chunk = (chunk_header_t *)((void *)chunk_header+cur_size);
             if((void *)next_chunk < start_sbrk + 64*1024
                     && (next_chunk->size_and_flag).alloc_flag_n_prev_chunk_size / ALLOCATED < 0 //free
@@ -84,15 +94,6 @@ int hw_free(void *mem)
                 cur_size = (chunk_header->size_and_flag).mmap_flag_n_cur_chunk_size;
                 prev_size = (chunk_header->size_and_flag).alloc_flag_n_prev_chunk_size;
                 continue;
-            }
-            chunk_header_t *prev_chunk = (chunk_header_t *)((void *)chunk_header-prev_size);
-            if((void *)prev_chunk > start_sbrk
-                    && (prev_chunk->size_and_flag).alloc_flag_n_prev_chunk_size / ALLOCATED < 0 //free
-                    && (prev_chunk->size_and_flag).mmap_flag_n_cur_chunk_size == cur_size) {
-                chunk_header = merge(chunk_header, prev_chunk, cur_size);
-                merged = true;
-                cur_size = (chunk_header->size_and_flag).mmap_flag_n_cur_chunk_size;
-                prev_size = (chunk_header->size_and_flag).alloc_flag_n_prev_chunk_size;
             }
         }
     }

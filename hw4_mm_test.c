@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
             if(ptr == NULL)
                 perror("hw_malloc returned NULL\n");
             else
-                printf("%p\n",ptr);
+                printf("%.12p\n",ptr);
         } else if(strcmp(token, "free") == 0) {
             token = strtok(NULL, " ");
             long int addr_i = strtol(token, NULL, 0);
@@ -50,7 +50,7 @@ void print_mmap_alloc_list(void)
         return;
     chunk_header_t *head = mmap_head->next;
     while(head!=mmap_head) {
-        printf("%p--------%d\n", head, (head->size_and_flag).mmap_flag_n_cur_chunk_size * MMAP);
+        printf("%.12p--------%d\n", head, (head->size_and_flag).mmap_flag_n_cur_chunk_size * MMAP);
         head = head->next;
     }
 }
@@ -61,7 +61,7 @@ void print_bin(int i)
     chunk_header_t *head = bin[i]->next;
     while(head!=bin[i]) {
         //print chunk address
-        printf("%p--------%d\n", (void *)((void *)head - start_sbrk), (head->size_and_flag).mmap_flag_n_cur_chunk_size);
+        printf("%.12p--------%d\n", (void *)((void *)head - start_sbrk), (head->size_and_flag).mmap_flag_n_cur_chunk_size);
         if(DEBUG) printf("alloc_flag_n_prev_chunk_size : %d\n",(head->size_and_flag).alloc_flag_n_prev_chunk_size);
         head = head->next;
     }
