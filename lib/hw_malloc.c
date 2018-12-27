@@ -32,8 +32,18 @@ void *hw_malloc(size_t bytes)
             while(i<11) {
                 if(bin[i]->next!=bin[i]) {
                     selected_chunk = bin[i]->next;
-                    bin[i]->next = selected_chunk->next;
-                    selected_chunk->next->prev = bin[i];
+
+                    chunk_header_t *head = bin[i]->next;
+                    while(head!=bin[i]) {
+                        if(head<selected_chunk)
+                            selected_chunk = head;
+                        head = head->next;
+                    }
+                    selected_chunk->prev->next = selected_chunk->next;
+                    selected_chunk->next->prev = selected_chunk->prev;
+
+                    // bin[i]->next = selected_chunk->next;
+                    // selected_chunk->next->prev = bin[i];
                     break;
                 }
                 ++i;
@@ -135,14 +145,19 @@ void *add_to_list(void *addr, size_t size, int alloc_method)
     } else if(alloc_method == HEAP) {
         (chunk_header->size_and_flag).mmap_flag_n_cur_chunk_size = size*HEAP; //size
         int i = get_bin_index(size);
-        //printf("i = %d\n",i);
-        chunk_header_t *head = bin[i]->next;
-        while(head!=bin[i] && head<chunk_header)
-            head = head->next;
-        chunk_header->next = head;
-        chunk_header->prev = head->prev;
-        head->prev->next = chunk_header;
-        head->prev = chunk_header;
+
+        chunk_header->next = bin[i];
+        chunk_header->prev = bin[i]->prev;
+        bin[i]->prev->next = chunk_header;
+        bin[i]->prev = chunk_header;
+
+        // chunk_header_t *head = bin[i]->next;
+        // while(head!=bin[i] && head<chunk_header)
+        //     head = head->next;
+        // chunk_header->next = head;
+        // chunk_header->prev = head->prev;
+        // head->prev->next = chunk_header;
+        // head->prev = chunk_header;
     }
     return NULL;
 }

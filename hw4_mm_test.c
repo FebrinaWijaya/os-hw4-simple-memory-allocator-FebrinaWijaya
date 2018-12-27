@@ -61,7 +61,10 @@ void print_bin(int i)
     chunk_header_t *head = bin[i]->next;
     while(head!=bin[i]) {
         //print chunk address
-        printf("%.12p--------%d\n", (void *)((void *)head - start_sbrk), (head->size_and_flag).mmap_flag_n_cur_chunk_size);
+        if((void *)((void *)head - start_sbrk) == 0)
+            printf("0x000000000000--------%d\n",(head->size_and_flag).mmap_flag_n_cur_chunk_size);
+        else
+            printf("%.12p--------%d\n", (void *)((void *)head - start_sbrk), (head->size_and_flag).mmap_flag_n_cur_chunk_size);
         if(DEBUG) printf("alloc_flag_n_prev_chunk_size : %d\n",(head->size_and_flag).alloc_flag_n_prev_chunk_size);
         head = head->next;
     }
