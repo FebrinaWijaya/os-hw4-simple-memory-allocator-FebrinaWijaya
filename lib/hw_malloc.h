@@ -35,9 +35,15 @@ typedef struct mmap_head_t {
     chunk_ptr_t next;
 } mmap_head_t;
 
+typedef struct addr_t {
+    void *addr;
+    struct addr_t* next;
+} addr_t;
+
 void *start_sbrk;
 chunk_header_t *mmap_head;
 chunk_header_t *bin[11];
+addr_t *assigned_addr_head;
 
 void *hw_malloc(size_t bytes);
 int hw_free(void *mem);
@@ -48,5 +54,8 @@ void split(void *addr, size_t chunk_size, size_t requested_size);
 chunk_header_t* merge(chunk_header_t* head1, chunk_header_t* head2, int init_size);
 int get_bin_index(int size);
 int get_sign(int num);
+void add_to_assign_list(void *in_addr);
+void remove_from_assign_list(void *in_addr);
+bool is_addr_assigned(void *in_addr);
 
 #endif

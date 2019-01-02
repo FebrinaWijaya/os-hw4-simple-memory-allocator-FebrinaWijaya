@@ -11,7 +11,9 @@ void *hw_malloc(size_t bytes)
                           MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
         if (addr == MAP_FAILED)
             return NULL;
-        return add_to_list(addr, size, MMAP);
+        void *ptr = add_to_list(addr, size, MMAP);
+        add_to_assign_list(ptr);
+        return ptr;
     } else {
         //use heap
         if(start_sbrk == NULL) {
@@ -25,7 +27,9 @@ void *hw_malloc(size_t bytes)
             chunk_header_t *start_brk = (chunk_header_t *)start_sbrk;
             (start_brk->size_and_flag).alloc_flag_n_prev_chunk_size = 1;
             split(start_sbrk, 64*1024, size);
-            return (void *)sizeof(chunk_header_t);
+            void *ptr = (void *)sizeof(chunk_header_t);
+            add_to_assign_list(ptr);
+            return ptr;
         } else {
             int i = get_bin_index(size); //min bin index for requested size
             chunk_header_t* selected_chunk;
@@ -50,7 +54,9 @@ void *hw_malloc(size_t bytes)
             }
             if(selected_chunk == NULL) return NULL;
             split(selected_chunk, (selected_chunk->size_and_flag).mmap_flag_n_cur_chunk_size, size);
-            return (void *)((void *)selected_chunk + sizeof(chunk_header_t) - start_sbrk);
+            void *ptr = (void *)((void *)selected_chunk + sizeof(chunk_header_t) - start_sbrk);
+            add_to_assign_list(ptr);
+            return ptr;
         }
     }
     return NULL;
@@ -58,6 +64,11 @@ void *hw_malloc(size_t bytes)
 
 int hw_free(void *mem)
 {
+    if(!is_addr_assigned(mem))
+        return -1;
+    else
+        remove_from_assign_list(mem);
+
     chunk_header_t *chunk_header = (chunk_header_t *)(mem - sizeof(chunk_header_t));
     if((long int)mem < 64*1024) chunk_header = (void *)chunk_header + (long int)start_sbrk;
     if(chunk_header == NULL) return -1;
@@ -244,4 +255,51 @@ int get_sign(int num)
         return 1;
     else
         return -1;
+}
+
+void add_to_assign_list(void *in_addr)
+{
+    if(assigned_addr_head == NULL) {
+        assigned_addr_head = (addr_t *)malloc(sizeof(addr_t));
+        assigned_addr_head->addr = in_addr;
+        assigned_addr_head->next = NULL;
+    } else {
+        addr_t *node = (addr_t *)malloc(sizeof(addr_t));
+        node->addr = in_addr;
+        node->next = assigned_addr_head;
+        assigned_addr_head = node;
+    }
+}
+void remove_from_assign_list(void *in_addr)
+{
+    if(assigned_addr_head == NULL)
+        return;
+    addr_t *temp = assigned_addr_head;
+    if(assigned_addr_head->addr == in_addr) {
+        assigned_addr_head = assigned_addr_head->next;
+        free(temp);
+        return;
+    }
+    addr_t *prev;
+    prev = temp;
+    temp = temp->next;
+    while(temp!=NULL) {
+        if(temp->addr == in_addr) {
+            prev->next = temp->next;
+            free(temp);
+            return;
+        }
+        prev = temp;
+        temp = temp->next;
+    }
+}
+bool is_addr_assigned(void *in_addr)
+{
+    addr_t *temp = assigned_addr_head;
+    while(temp!=NULL) {
+        if(temp->addr == in_addr)
+            return true;
+        temp = temp->next;
+    }
+    return false;
 }
