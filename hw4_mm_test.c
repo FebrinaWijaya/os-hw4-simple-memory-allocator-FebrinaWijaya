@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
             if(hw_free(ptr)==0)
                 printf("success\n");
             else
-                printf("failed\n");
+                printf("fail\n");
         }
     }
     return 0;
